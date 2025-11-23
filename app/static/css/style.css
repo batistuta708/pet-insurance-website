@@ -1,0 +1,58 @@
+/* --- Hero Section with Background Image --- */
+.hero {
+    text-align: center;
+    padding: 80px 20px;
+    background: url('../images/pexels-willian-luiz-7444093.jpeg') no-repeat center center/cover;
+    color: #fff;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Overlay to darken image for better text contrast */
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 0;
+}
+
+.hero h1,
+.hero p,
+.hero a {
+    position: relative;
+    z-index: 1;
+}
+
+.hero h1 {
+    font-size: 3em;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+}
+
+.hero p {
+    font-size: 1.4em;
+    margin-bottom: 30px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+}
+
+.hero a {
+    display: inline-block;
+    padding: 15px 30px;
+    background-color: #ffdd57;
+    color: #333;
+    font-weight: bold;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.hero a:hover {
+    background-color: #ffc107;
+    color: #fff;
+}

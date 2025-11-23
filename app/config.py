@@ -1,6 +1,6 @@
 import os
 
 class Config:
-    SECRET_KEY = os.getenv('SECRET_KEY', 'devkey')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'sqlite:///site.db')
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'supersecretkey'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///pet_insurance.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False

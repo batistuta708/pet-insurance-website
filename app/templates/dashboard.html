@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}My Dashboard{% endblock %}
+
+{% block content %}
+<h2>Welcome, {{ current_user.email }}!</h2>
+
+<h3>Your Pets</h3>
+{% if pets %}
+    <ul>
+    {% for pet in pets %}
+        <li>{{ pet.name }} ({{ pet.type }}, {{ pet.age }} years old)</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>You haven’t added any pets yet.</p>
+{% endif %}
+
+<h3>Your Policies</h3>
+{% if policies %}
+    <ul>
+    {% for policy in policies %}
+        <li>{{ policy.pet.name }} – Coverage: ${{ policy.coverage_amount }}, Premium: ${{ policy.premium }}</li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No policies found.</p>
+{% endif %}
+
+<a href="{{ url_for('quote.get_quote') }}">Add a Pet / Get Quote</a>
+{% endblock %}

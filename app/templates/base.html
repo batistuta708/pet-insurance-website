@@ -2,11 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pet Insurance Website</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Pet Insurance{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>🐶 Welcome to Nami Pet Insurance</h1>
-    <p>Your trusted pet protection partner.</p>
+    <nav>
+        <a href="{{ url_for('main.index') }}">Home</a> |
+        <a href="{{ url_for('quote.get_quote') }}">Get Quote</a> |
+        {% if current_user.is_authenticated %}
+            <span>Welcome, {{ current_user.email }}</span> |
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+            {% if current_user.is_admin %}
+                | <a href="{{ url_for('admin.admin_dashboard') }}">Admin Dashboard</a>
+            {% endif %}
+        {% else %}
+            <a href="{{ url_for('auth.login') }}">Login</a> |
+            <a href="{{ url_for('auth.register') }}">Register</a>
+        {% endif %}
+    </nav>
+    <hr>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
 </body>
 </html>

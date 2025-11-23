@@ -1,6 +1,27 @@
-{% extends "base.html" %}
-{% block title %}Home - Pet Insurance{% endblock %}
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock %}
+
 {% block content %}
-  <h2>Welcome to Nami Pet Insurance</h2>
-  <p>Protect your furry friends with affordable and reliable coverage.</p>
+<section class="hero">
+    <h1>Welcome to Pet Insurance</h1>
+    <p>Protect your furry friends 🐶🐱 with easy and affordable insurance plans!</p>
+    <a href="{{ url_for('quote.get_quote') }}">Get Your Quote Now</a>
+</section>
+
+<section class="highlights">
+    <h2>Why Choose Us?</h2>
+    <ul>
+        <li>Fast and easy online quotes</li>
+        <li>Affordable monthly premiums</li>
+        <li>Coverage for dogs, cats, and more</li>
+        <li>Secure and trusted platform</li>
+    </ul>
+</section>
+
+<section class="cta">
+    {% if not current_user.is_authenticated %}
+        <p>New here? <a href="{{ url_for('auth.register') }}">Register an account</a> or <a href="{{ url_for('auth.login') }}">Login</a></p>
+    {% endif %}
+</section>
 {% endblock %}
