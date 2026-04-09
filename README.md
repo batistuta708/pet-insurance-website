@@ -1,5 +1,5 @@
 
-🐾 Pet Insurance Website
+ Pet Insurance Website
 A modern Flask-powered web application for pet insurance management.
 This project provides a clean, modular structure suitable for learning, portfolio use, and production-ready deployment.
 
