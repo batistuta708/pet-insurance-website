@@ -17,3 +17,7 @@ def about():
 @main_bp.route('/contact')
 def contact():
     return render_template('contact.html')
+
+@main_bp.route('/privacy')
+def privacy():
+    return render_template('privacy.html')

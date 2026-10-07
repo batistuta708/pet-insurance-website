@@ -27,7 +27,7 @@ def register_and_login(client, email="owner@example.com", password="password123"
     return client.post("/login", data={"email": email, "password": password})
 
 
-@pytest.mark.parametrize("path", ["/", "/coverage", "/about", "/contact", "/login", "/register"])
+@pytest.mark.parametrize("path", ["/", "/coverage", "/about", "/contact", "/privacy", "/login", "/register"])
 def test_public_pages_load(client, path):
     assert client.get(path).status_code == 200
 

@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, jsonify, request
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
@@ -41,6 +41,24 @@ def create_app(config_object="app.config.Config"):
     app.register_blueprint(quote_bp, url_prefix="/quote")
     app.register_blueprint(dashboard)
     app.register_blueprint(admin_bp, url_prefix="/admin")
+
+    # JSON API for the mobile app: token auth instead of cookies, so no CSRF tokens
+    from app.routes.api_routes import api_bp
+
+    csrf.exempt(api_bp)
+    app.register_blueprint(api_bp, url_prefix="/api/v1")
+
+    @app.errorhandler(404)
+    def not_found(e):
+        if request.path.startswith("/api/"):
+            return jsonify({"error": "Not found."}), 404
+        return e
+
+    @app.errorhandler(405)
+    def method_not_allowed(e):
+        if request.path.startswith("/api/"):
+            return jsonify({"error": "Method not allowed."}), 405
+        return e
 
     # Create tables on startup so it also works under gunicorn, not only `python run.py`
     with app.app_context():

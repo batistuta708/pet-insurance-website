@@ -11,8 +11,10 @@ Admins get an overview of all users, pets and policies.
 - Instant quote: premium calculated from pet type and age, saved as a policy
 - User dashboard listing pets and policies
 - Admin dashboard (users with `is_admin = True`)
+- JSON API at `/api/v1` (token auth) for the mobile app: auth, quotes, pets, policies, claims, account deletion
+- Flutter mobile app in [`mobile/`](mobile/README.md), including the Google Play release steps
 
-**Not built yet:** claim submission (the `Claim` model exists, no pages yet),
+**Not built yet:** claim submission on the website (it works in the app),
 editing/deleting pets, multiple plan tiers, payments.
 
 ## Project structure
@@ -23,11 +25,12 @@ pet-insurance-website/
 │   ├── __init__.py              # App factory, extensions, blueprint registration
 │   ├── config.py                # Settings (reads .env)
 │   ├── models/                  # User, Pet, Policy, Claim
-│   ├── routes/                  # main, auth, quote, dashboard, admin blueprints
+│   ├── routes/                  # main, auth, quote, dashboard, admin, api blueprints
 │   ├── utils/premium_calculator.py
 │   ├── static/                  # css, js, images
 │   └── templates/
-├── tests/test_app.py
+├── mobile/                      # Flutter app (see mobile/README.md)
+├── tests/                       # test_app.py (website), test_api.py (JSON API)
 ├── run.py
 └── requirements.txt
 ```
@@ -71,6 +74,21 @@ flask --app run shell
 ```bash
 pytest
 ```
+
+## JSON API (summary)
+
+| Method | Path | Auth | Purpose |
+|---|---|---|---|
+| POST | `/api/v1/auth/register` | – | `{email, password}` → `{token, user}` |
+| POST | `/api/v1/auth/login` | – | `{email, password}` → `{token, user}` |
+| GET / DELETE | `/api/v1/me` | Bearer | Current user / delete account and all data |
+| POST | `/api/v1/quote` | – | `{type, age}` → price preview |
+| GET / POST | `/api/v1/pets` | Bearer | List pets / add pet (creates its policy) |
+| DELETE | `/api/v1/pets/<id>` | Bearer | Remove pet, its policy and claims |
+| GET | `/api/v1/policies` | Bearer | List policies |
+| GET / POST | `/api/v1/claims` | Bearer | List claims / `{policy_id, description, amount}` |
+
+Errors are `{"error": "message"}` with a 4xx status. Tokens last 30 days.
 
 ## Deployment
 

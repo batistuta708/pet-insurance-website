@@ -1,0 +1,82 @@
+import 'package:flutter/material.dart';
+
+import '../api/api_client.dart';
+import '../state/session.dart';
+
+/// Shows an API error. A 401 means the session expired: sign out and return to login.
+void showApiError(BuildContext context, Object error) {
+  if (!context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  if (error is ApiException && error.isUnauthorized) {
+    final session = SessionScope.read(context);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    session.logout();
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Your session expired. Please log in again.')),
+    );
+    return;
+  }
+  messenger.showSnackBar(SnackBar(content: Text(error.toString())));
+}
+
+class ErrorRetry extends StatelessWidget {
+  const ErrorRetry({super.key, required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off, size: 48, color: Theme.of(context).colorScheme.error),
+            const SizedBox(height: 12),
+            Text(message, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            FilledButton.tonal(onPressed: onRetry, child: const Text('Try again')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class EmptyState extends StatelessWidget {
+  const EmptyState({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.message,
+    this.action,
+  });
+
+  final IconData icon;
+  final String title;
+  final String message;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // ListView so pull-to-refresh still works on an empty screen.
+    return ListView(
+      padding: const EdgeInsets.all(32),
+      children: [
+        const SizedBox(height: 48),
+        Icon(icon, size: 64, color: theme.colorScheme.primary),
+        const SizedBox(height: 16),
+        Text(title, style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
+        const SizedBox(height: 8),
+        Text(message, textAlign: TextAlign.center),
+        if (action != null) ...[
+          const SizedBox(height: 24),
+          Center(child: action!),
+        ],
+      ],
+    );
+  }
+}
