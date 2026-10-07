@@ -9,8 +9,12 @@
 <body>
     <nav>
         <a href="{{ url_for('main.index') }}">Home</a> |
+        <a href="{{ url_for('main.coverage') }}">Coverage</a> |
+        <a href="{{ url_for('main.about') }}">About</a> |
+        <a href="{{ url_for('main.contact') }}">Contact</a> |
         <a href="{{ url_for('quote.get_quote') }}">Get Quote</a> |
         {% if current_user.is_authenticated %}
+            <a href="{{ url_for('dashboard.user_dashboard') }}">My Dashboard</a> |
             <span>Welcome, {{ current_user.email }}</span> |
             <a href="{{ url_for('auth.logout') }}">Logout</a>
             {% if current_user.is_admin %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Coverage{% endblock %}
+
+{% block content %}
+<h1>What's Covered</h1>
+<p>Every policy currently includes up to <strong>$1,000</strong> of coverage per pet.
+Your monthly premium depends on your pet's type and age.</p>
+
+<h2>Pets we cover</h2>
+<ul>
+    <li>Dogs</li>
+    <li>Cats</li>
+    <li>Other pets (rabbits, birds and more)</li>
+</ul>
+
+<h2>How claims work</h2>
+<ol>
+    <li>Get a quote and add your pet from your dashboard.</li>
+    <li>Submit a claim with a description and the amount.</li>
+    <li>We review it and update the status on your dashboard.</li>
+</ol>
+
+<p><a href="{{ url_for('quote.get_quote') }}">Get your quote</a></p>
+{% endblock %}

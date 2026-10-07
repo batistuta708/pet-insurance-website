@@ -1,166 +1,86 @@
+# Pet Insurance Website
 
- Pet Insurance Website
-A modern Flask-powered web application for pet insurance management.
-This project provides a clean, modular structure suitable for learning, portfolio use, and production-ready deployment.
+A Flask web application for pet insurance: users register, add their pets, get an
+instant monthly premium quote, and see their pets and policies on a dashboard.
+Admins get an overview of all users, pets and policies.
 
- Preview
-(Add screenshots here if you want — tell me and I’ll generate them.)
+## Features
 
- Features
- Landing page showcasing pet insurance services
+- Landing, coverage, about and contact pages
+- Account registration and login (Flask-Login, hashed passwords, CSRF protection)
+- Instant quote: premium calculated from pet type and age, saved as a policy
+- User dashboard listing pets and policies
+- Admin dashboard (users with `is_admin = True`)
 
- Pet insurance plans UI (Basic, Standard, Premium)
+**Not built yet:** claim submission (the `Claim` model exists, no pages yet),
+editing/deleting pets, multiple plan tiers, payments.
 
- Online claim submission
+## Project structure
 
- Contact form
-
- Responsive, modern UI using Bootstrap
-
- Modular Flask structure (Blueprint-ready)
-
-Easily extendable (database, auth, admin panel)
-
- Production deployment-ready (Gunicorn, Render/Heroku/Docker)
-
-Project Structure
-
+```
 pet-insurance-website/
-│
 ├── app/
-│   ├── __init__.py         # App factory + configuration
-│   ├── routes.py           # All main routes
-│   ├── forms.py            # WTForms (Contact, Claims)
-│   ├── models.py           # Database models (if using SQLAlchemy)
-│   │
-│   ├── static/
-│   │   ├── css/            # Stylesheets
-│   │   ├── js/             # Custom scripts
-│   │   └── images/         # Icons, banners, pet images
-│   │
+│   ├── __init__.py              # App factory, extensions, blueprint registration
+│   ├── config.py                # Settings (reads .env)
+│   ├── models/                  # User, Pet, Policy, Claim
+│   ├── routes/                  # main, auth, quote, dashboard, admin blueprints
+│   ├── utils/premium_calculator.py
+│   ├── static/                  # css, js, images
 │   └── templates/
-│       ├── base.html       # Master layout
-│       ├── index.html      # Home page
-│       ├── plans.html      # Pet insurance plans
-│       ├── claim.html      # New claim page
-│       ├── contact.html    # Contact form
-│       └── layout.html     # Shared layouts / components
-│
-├── run.py                  # App entry point
-├── requirements.txt        # Dependencies
-└── README.md               # Documentation
+├── tests/test_app.py
+├── run.py
+└── requirements.txt
+```
 
-Tech Stack
+## Setup
 
-Python 3.8+
-
-Flask (core framework)
-
-WTForms (form handling)
-
-Flask-WTF (CSRF protection)
-
-Bootstrap 5 (frontend styling)
-
-Jinja2 (templating engine)
-
-Installation & Setup
-1 Clone the project
-
+```bash
 git clone https://github.com/batistuta708/pet-insurance-website.git
 cd pet-insurance-website
-
-Create and activate a virtual environment
-
-Mac / Linux
-
 python3 -m venv venv
-source venv/bin/activate
-
-
-Windows
-
-python -m venv venv
-venv\Scripts\activate
-
-3️ Install dependencies
+source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+```
 
-4️ Run the application
-flask run
+Create a `.env` file in the project root:
 
+```
+SECRET_KEY=<output of: python -c "import secrets; print(secrets.token_hex(32))">
+FLASK_DEBUG=1
+# DATABASE_URL=postgresql://...   (optional; defaults to SQLite in instance/)
+```
 
-Your application is now accessible at:
- http://127.0.0.1:5000/
+Run it:
 
- Environment Variables
+```bash
+python run.py
+```
 
-Create a .env file in the project root:
+Open http://127.0.0.1:5000/. Database tables are created automatically on start.
 
-FLASK_ENV=development
-SECRET_KEY=your-super-secret-key
+To make a user an admin:
 
+```bash
+flask --app run shell
+>>> from app.models.user import User; from app import db
+>>> u = User.query.filter_by(email="you@example.com").first(); u.is_admin = True; db.session.commit()
+```
 
-You can generate a secure key with:
+## Tests
 
-python -c "import secrets; print(secrets.token_hex(32))"
-
- Database Setup (optional)
-
-If using SQLAlchemy:
-
-Create database models in models.py
-
-Initialize the database:
-
-from app import create_app, db
-app = create_app()
-app.app_context().push()
-db.create_all()
-
-Running Tests (optional)
-
-If you add tests, run them using:
-
+```bash
 pytest
+```
 
- Deployment Guide
-Deploy to Render
+## Deployment
 
-Create a new web service
+Start command for Render/Heroku-style hosts: `gunicorn run:app`.
+Set `SECRET_KEY` (and ideally `DATABASE_URL` for a persistent database) as environment variables.
 
-Use gunicorn run:app as start command
+## Author
 
-Add environment variables
+Batistuta Indiazi — GitHub: [batistuta708](https://github.com/batistuta708)
 
-Deploy
+## License
 
-Deploy with Docker
-
-Create a file named Dockerfile:
-
-FROM python:3.10
-WORKDIR /app
-COPY . .
-RUN pip install -r requirements.txt
-CMD ["gunicorn", "run:app", "-b", "0.0.0.0:5000"]
-
-
-Build and run:
-
-docker build -t pet-insurance .
-docker run -p 5000:5000 pet-insurance
-
-Contributing
-
-Pull requests are welcome. If you'd like major changes, open an issue to discuss what you’d like to modify.
-
- License
-
-This project is open-source and available under the MIT License.
-
-Author
-
-Batistuta Indiazi
-Pet Insurance Project • Flask Developer
-GitHub: Batistuta708
+MIT
