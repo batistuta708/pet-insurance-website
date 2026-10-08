@@ -71,14 +71,40 @@ The released app must talk to a public **HTTPS** server. For example, on Render:
 
 ## 4. Build for Google Play
 
-```bash
-flutter build appbundle --release --dart-define=API_BASE_URL=https://<your-app>/api/v1
+Release builds talk to `https://pet-insurance.onrender.com/api/v1` automatically (see `lib/config.dart`);
+`flutter run` (debug) still uses your local Flask server.
+
+**App icon** (artwork in `assets/icon/`; the 512×512 store icon is `store/play_store_icon_512.png`):
+
+```
+flutter pub get
+dart run flutter_launcher_icons
 ```
 
-Before the first release build, create an upload key and configure signing, following
-https://docs.flutter.dev/deployment/android#sign-the-app (keep the `.jks` file and its passwords
-safe and out of git; they're already in `.gitignore`).
-Also replace the default Flutter launcher icon (e.g. with the `flutter_launcher_icons` package).
+**Upload key (one time).** Run in PowerShell; choose a strong password and store it in a password manager.
+Keep the `.jks` file and password safe: you need them for every future update, and they are not in git.
+
+```
+& "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -genkey -v -keystore "$env:USERPROFILE\upload-keystore.jks" -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+Then create `android/key.properties` (ignored by git) with:
+
+```
+storePassword=<your password>
+keyPassword=<your password>
+keyAlias=upload
+storeFile=C:/Users/Lenovo/upload-keystore.jks
+```
+
+**Build the bundle:**
+
+```
+flutter build appbundle --release
+```
+
+The file to upload is `build/app/outputs/bundle/release/app-release.aab`.
+Before each new upload, raise `version:` in `pubspec.yaml` (e.g. `1.0.1+2`; the number after `+` must increase).
 
 Then in the Google Play Console (https://play.google.com/console, one-time USD 25 registration):
 
