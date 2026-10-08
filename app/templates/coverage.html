@@ -1,25 +1,52 @@
 {% extends 'base.html' %}
 
-{% block title %}Coverage{% endblock %}
+{% block title %}What's covered{% endblock %}
 
 {% block content %}
-<h1>What's Covered</h1>
-<p>Every policy currently includes up to <strong>$1,000</strong> of coverage per pet.
-Your monthly premium depends on your pet's type and age.</p>
+<div class="page">
+    <div class="wrap">
+        <div class="page-head prose">
+            <h1>What's covered</h1>
+            <p>One straightforward policy per pet. Vet bills are covered up to ${{ '{:,.0f}'.format(coverage) }} a year, and the monthly price depends only on the kind of animal and its age.</p>
+        </div>
 
-<h2>Pets we cover</h2>
-<ul>
-    <li>Dogs</li>
-    <li>Cats</li>
-    <li>Other pets (rabbits, birds and more)</li>
-</ul>
+        <div class="prose">
+            <h2>Monthly prices</h2>
+        </div>
+        <div class="table-wrap" style="max-width: 720px">
+            <table>
+                <thead>
+                    <tr><th>Pet</th><th class="num">1 year old</th><th class="num">5 years old</th><th class="num">10 years old</th></tr>
+                </thead>
+                <tbody>
+                {% for kind, row in prices.items() %}
+                    <tr>
+                        <td>{{ 'Other pets' if kind == 'Other' else kind ~ 's' }}</td>
+                        {% for p in row %}<td class="num">${{ '%.2f'|format(p) }}</td>{% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
-<h2>How claims work</h2>
-<ol>
-    <li>Get a quote and add your pet from your dashboard.</li>
-    <li>Submit a claim with a description and the amount.</li>
-    <li>We review it and update the status on your dashboard.</li>
-</ol>
+        <div class="prose">
+            <h2>What a policy includes</h2>
+            <ul>
+                <li>Vet treatment for accidents and illness, up to ${{ '{:,.0f}'.format(coverage) }} a year</li>
+                <li>Claims submitted from the app, with a photo of the vet bill</li>
+                <li>A clear decision on every claim, visible in the app</li>
+            </ul>
 
-<p><a href="{{ url_for('quote.get_quote') }}">Get your quote</a></p>
+            <h2>How a claim works</h2>
+            <ol>
+                <li>Add your pet and start cover at the price shown.</li>
+                <li>After a vet visit, submit a claim in the app with what happened, the amount and a photo of the bill.</li>
+                <li>We review it, and the claim's status changes to approved or rejected.</li>
+            </ol>
+
+            <p>This is a demo project: no real insurance is sold and no claims are paid out.</p>
+            <p><a class="btn" href="{{ url_for('quote.get_quote') }}">Get a quote</a></p>
+        </div>
+    </div>
+</div>
 {% endblock %}

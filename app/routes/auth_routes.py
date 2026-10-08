@@ -25,6 +25,8 @@ def login():
             # Only follow relative redirects to avoid open-redirects
             if next_page and next_page.startswith("/") and not next_page.startswith("//"):
                 return redirect(next_page)
+            if user.is_admin:
+                return redirect(url_for("admin.admin_dashboard"))
             return redirect(url_for("dashboard.user_dashboard"))
         flash("Invalid email or password.", "danger")
     return render_template("login.html")

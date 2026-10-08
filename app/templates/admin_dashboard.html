@@ -1,112 +1,95 @@
 {% extends 'base.html' %}
 
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Admin{% endblock %}
 
 {% block content %}
-<h1>Admin Dashboard</h1>
+<div class="page">
+    <div class="wrap">
+        <div class="page-head">
+            <h1>Admin</h1>
+            <p>Review claims and see everyone's pets and cover.</p>
+        </div>
 
-<h2 id="claims">Claims {% if pending_count %}<span class="badge">{{ pending_count }} pending</span>{% endif %}</h2>
-{% if claim_rows %}
-<table class="dashboard-table">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>Pet</th>
-            <th>Owner</th>
-            <th>Amount</th>
-            <th>Description</th>
-            <th>Photo</th>
-            <th>Status</th>
-            <th>Decision</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for row in claim_rows %}
-        {% set c = row.claim %}
-        <tr>
-            <td>{{ c.id }}</td>
-            <td>{{ row.pet_name }}</td>
-            <td>{{ row.owner_email }}</td>
-            <td>${{ '%.2f'|format(c.amount) }}{% if row.coverage %}<br><small>of ${{ '%.0f'|format(row.coverage) }}</small>{% endif %}</td>
-            <td>{{ c.description }}</td>
-            <td>{% if row.has_photo %}<a href="{{ url_for('admin.claim_photo', claim_id=c.id) }}" target="_blank" rel="noopener">View</a>{% else %}—{% endif %}</td>
-            <td><span class="status status-{{ c.status|lower }}">{{ c.status }}</span></td>
-            <td class="claim-actions">
-                {% for status in statuses if status != c.status %}
-                <form method="POST" action="{{ url_for('admin.set_claim_status', claim_id=c.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="status" value="{{ status }}">
-                    <button type="submit" class="btn btn-small btn-{{ status|lower }}">{{ 'Approve' if status == 'Approved' else 'Reject' if status == 'Rejected' else 'Reset to pending' }}</button>
-                </form>
-                {% endfor %}
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No claims yet.</p>
-{% endif %}
+        <div class="dash-grid">
+            <section class="dash-section" id="claims" aria-labelledby="claims-h">
+                <h2 id="claims-h">Claims{% if pending_count %}<span class="count">{{ pending_count }} to review</span>{% endif %}</h2>
+                {% if claim_rows %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Claim</th><th>Pet</th><th>Owner</th><th>What happened</th><th class="num">Amount</th><th>Photo</th><th>Status</th><th>Decision</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for row in claim_rows %}
+                            {% set c = row.claim %}
+                            <tr>
+                                <td>#{{ c.id }}</td>
+                                <td>{{ row.pet_name }}</td>
+                                <td>{{ row.owner_email }}</td>
+                                <td>{{ c.description }}</td>
+                                <td class="num">${{ '%.2f'|format(c.amount) }}{% if row.coverage %}<br><small>of ${{ '{:,.0f}'.format(row.coverage) }}</small>{% endif %}</td>
+                                <td>{% if row.has_photo %}<a href="{{ url_for('admin.claim_photo', claim_id=c.id) }}" target="_blank" rel="noopener">View bill</a>{% else %}<small>None</small>{% endif %}</td>
+                                <td><span class="status status-{{ c.status|lower }}">{{ c.status }}</span></td>
+                                <td>
+                                    <div class="claim-actions">
+                                    {% for status in statuses if status != c.status %}
+                                        <form method="POST" action="{{ url_for('admin.set_claim_status', claim_id=c.id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="status" value="{{ status }}">
+                                            <button type="submit" class="act-{{ status|lower }}">{{ 'Approve' if status == 'Approved' else 'Reject' if status == 'Rejected' else 'Back to pending' }}</button>
+                                        </form>
+                                    {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="empty">No claims yet.</p>
+                {% endif %}
+            </section>
 
-<h2>Users</h2>
-<table class="dashboard-table">
-    <thead>
-        <tr>
-            <th>Email</th>
-            <th>Role</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for user in users %}
-        <tr>
-            <td>{{ user.email }}</td>
-            <td>{% if user.is_admin %}Admin{% else %}User{% endif %}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+            <section class="dash-section" aria-labelledby="users-h">
+                <h2 id="users-h">Customers</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Email</th><th>Role</th><th class="num">Pets</th></tr></thead>
+                        <tbody>
+                        {% for user in users %}
+                            <tr><td>{{ user.email }}</td><td>{{ 'Admin' if user.is_admin else 'Customer' }}</td><td class="num">{{ user.pets|length }}</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-<h2>Pets</h2>
-<table class="dashboard-table">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Age</th>
-            <th>Owner ID</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for pet in pets %}
-        <tr>
-            <td>{{ pet.name }}</td>
-            <td>{{ pet.type }}</td>
-            <td>{{ pet.age }}</td>
-            <td>{{ pet.owner_id }}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-
-<h2>Policies</h2>
-<table class="dashboard-table">
-    <thead>
-        <tr>
-            <th>Policy ID</th>
-            <th>Pet ID</th>
-            <th>Coverage</th>
-            <th>Premium</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for policy in policies %}
-        <tr>
-            <td>{{ policy.id }}</td>
-            <td>{{ policy.pet_id }}</td>
-            <td>${{ policy.coverage_amount }}</td>
-            <td>${{ policy.premium }}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+            <section class="dash-section" aria-labelledby="pets-h">
+                <h2 id="pets-h">Pets and cover</h2>
+                {% if pets %}
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Pet</th><th>Type</th><th class="num">Age</th><th>Owner</th><th class="num">Monthly price</th><th class="num">Cover</th></tr></thead>
+                        <tbody>
+                        {% for pet in pets %}
+                            <tr>
+                                <td>{{ pet.name }}</td>
+                                <td>{{ pet.type }}</td>
+                                <td class="num">{{ pet.age }}</td>
+                                <td>{{ pet.owner.email if pet.owner else '—' }}</td>
+                                <td class="num">{% if pet.policy %}${{ '%.2f'|format(pet.policy.premium) }}{% else %}—{% endif %}</td>
+                                <td class="num">{% if pet.policy %}${{ '{:,.0f}'.format(pet.policy.coverage_amount) }}{% else %}—{% endif %}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="empty">No pets yet.</p>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+</div>
 {% endblock %}

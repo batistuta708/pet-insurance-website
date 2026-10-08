@@ -3,7 +3,12 @@
 {% block title %}Contact{% endblock %}
 
 {% block content %}
-<h1>Contact Us</h1>
-<p>Questions about a quote or a claim? Email us at
-<a href="mailto:batistutatinami@gmail.com">batistutatinami@gmail.com</a>.</p>
+<div class="page">
+    <div class="wrap prose">
+        <h1>Contact</h1>
+        <p>Questions about a quote, a claim or your account? Email
+            <a href="mailto:batistutatinami@gmail.com">batistutatinami@gmail.com</a> and we will reply as soon as we can.</p>
+        <p>To delete your account, see <a href="{{ url_for('main.delete_account') }}">how to delete your account</a>.</p>
+    </div>
+</div>
 {% endblock %}

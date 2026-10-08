@@ -1,31 +1,163 @@
 {% extends 'base.html' %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Pet insurance with an instant price{% endblock %}
 
 {% block content %}
 <section class="hero">
-    <h1>Welcome to Pet Insurance</h1>
-    <p>Protect your furry friends 🐶🐱 with easy and affordable insurance plans!</p>
-    <a href="{{ url_for('quote.get_quote') }}" class="btn btn-primary">Get Your Quote Now</a>
+    <div class="wrap">
+        <div>
+            <h1>Cover for the ones who can't ask for it.</h1>
+            <p class="lead">Insurance for dogs, cats and other pets. See your monthly price straight away, add your pet in a minute, and track every vet claim from your phone.</p>
+            <div class="actions">
+                {% if current_user.is_authenticated %}
+                    <a class="btn" href="{{ url_for('quote.get_quote') }}">Add a pet</a>
+                    <a class="btn btn-ghost" href="{{ url_for('dashboard.user_dashboard') }}">See my pets</a>
+                {% else %}
+                    <a class="btn" href="{{ url_for('auth.register') }}">Create an account</a>
+                    <a class="btn btn-ghost" href="{{ url_for('main.coverage') }}">What's covered</a>
+                {% endif %}
+            </div>
+            <p class="fine">Demo project: prices are illustrative and no real insurance is sold.</p>
+        </div>
+
+        <div class="tag-wrap">
+            <form class="tag" id="quote-tag" action="{{ url_for('quote.get_quote') }}" method="get" aria-labelledby="tag-title">
+                <p class="tag-title engraved" id="tag-title">Your pet's monthly price</p>
+
+                <fieldset>
+                    <legend>Type of pet</legend>
+                    <div class="segmented">
+                        <input type="radio" name="type" id="t-dog" value="Dog" checked>
+                        <label for="t-dog">Dog</label>
+                        <input type="radio" name="type" id="t-cat" value="Cat">
+                        <label for="t-cat">Cat</label>
+                        <input type="radio" name="type" id="t-other" value="Other">
+                        <label for="t-other">Other</label>
+                    </div>
+                </fieldset>
+
+                <div class="age-row">
+                    <label for="age">Age: <output id="age-out" for="age">3 years</output></label>
+                    <input type="range" id="age" name="age" min="0" max="20" value="3">
+                </div>
+
+                <p class="tag-price engraved" id="price" aria-live="polite">${{ '%.2f'|format(start_price) }} <small>/ month</small></p>
+                <p class="tag-cover">Vet bills covered up to ${{ '{:,.0f}'.format(coverage) }} a year</p>
+                <button class="btn btn-dark" type="submit">Start cover at this price</button>
+            </form>
+        </div>
+    </div>
 </section>
 
-<section class="highlights">
-    <h2>Why Choose Us?</h2>
-    <ul class="highlights-list">
-        <li>Fast and easy online quotes</li>
-        <li>Affordable monthly premiums</li>
-        <li>Coverage for dogs, cats, and more</li>
-        <li>Secure and trusted platform</li>
-    </ul>
+<section class="section">
+    <div class="wrap">
+        <div class="section-head">
+            <h2>Every kind of companion</h2>
+            <p>One simple policy for each pet. The price depends only on what kind of animal it is and how old it is.</p>
+        </div>
+        <div class="pets">
+            <figure class="pet">
+                <img src="{{ url_for('static', filename='images/dog-lead.webp') }}" alt="A black and white dog holding a red lead in its mouth" width="800" height="800" loading="lazy">
+                <figcaption>
+                    <h3>Dogs</h3>
+                    <p>Accidents, illness and vet visits. <span class="from">From ${{ '%.2f'|format(from_prices['Dog']) }} a month.</span></p>
+                </figcaption>
+            </figure>
+            <figure class="pet">
+                <img src="{{ url_for('static', filename='images/cat.webp') }}" alt="A white cat dozing in the sun" width="800" height="800" loading="lazy">
+                <figcaption>
+                    <h3>Cats</h3>
+                    <p>Indoor or outdoor, kitten or senior. <span class="from">From ${{ '%.2f'|format(from_prices['Cat']) }} a month.</span></p>
+                </figcaption>
+            </figure>
+            <figure class="pet">
+                <img src="{{ url_for('static', filename='images/dog-grass.webp') }}" alt="A happy brown dog lying in long grass" width="800" height="800" loading="lazy">
+                <figcaption>
+                    <h3>Other pets</h3>
+                    <p>Rabbits, birds and the rest of the family. <span class="from">From ${{ '%.2f'|format(from_prices['Other']) }} a month.</span></p>
+                </figcaption>
+            </figure>
+        </div>
+    </div>
 </section>
 
-<section class="cta">
-    {% if not current_user.is_authenticated %}
-        <p>New here? 
-            <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">Register</a> 
-            or 
-            <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">Login</a>
-        </p>
-    {% endif %}
+<section class="section" style="padding-top: 0">
+    <div class="wrap">
+        <div class="section-head">
+            <h2>How a claim works</h2>
+            <p>From the vet's waiting room to a decision, all in the app.</p>
+        </div>
+        <ol class="steps">
+            <li>
+                <h3>Add your pet</h3>
+                <p>Tell us their name, type and age. Cover starts at the price on the tag.</p>
+            </li>
+            <li>
+                <h3>Claim after the vet</h3>
+                <p>Enter what happened and the amount, and snap a photo of the bill.</p>
+            </li>
+            <li>
+                <h3>Track the decision</h3>
+                <p>We review the claim and its status changes to approved or rejected.</p>
+            </li>
+        </ol>
+    </div>
 </section>
+
+<section class="band">
+    <div class="wrap">
+        <div>
+            <h2>Claims live in the app</h2>
+            <p>Submit claims with a photo of the bill and follow their status on your phone.</p>
+        </div>
+        {% if current_user.is_authenticated %}
+            <a class="btn" href="{{ url_for('dashboard.user_dashboard') }}">See my pets and claims</a>
+        {% else %}
+            <a class="btn" href="{{ url_for('auth.register') }}">Create an account</a>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var form = document.getElementById('quote-tag');
+    var age = document.getElementById('age');
+    var ageOut = document.getElementById('age-out');
+    var price = document.getElementById('price');
+    var timer = null;
+    var latest = 0;
+
+    function selectedType() {
+        return form.querySelector('input[name="type"]:checked').value;
+    }
+    function ageLabel(n) {
+        return n == 0 ? 'under 1 year' : n == 1 ? '1 year' : n + ' years';
+    }
+    function update() {
+        ageOut.textContent = ageLabel(age.value);
+        clearTimeout(timer);
+        timer = setTimeout(fetchPrice, 150);
+    }
+    function fetchPrice() {
+        var id = ++latest;
+        price.classList.add('updating');
+        fetch('{{ url_for("api.quote") }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({type: selectedType(), age: parseInt(age.value, 10)})
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (q) {
+            if (id !== latest || q.monthly_premium === undefined) return;
+            price.innerHTML = '$' + q.monthly_premium.toFixed(2) + ' <small>/ month</small>';
+        })
+        .catch(function () {})
+        .finally(function () { if (id === latest) price.classList.remove('updating'); });
+    }
+    form.addEventListener('change', update);
+    age.addEventListener('input', update);
+})();
+</script>
 {% endblock %}

@@ -3,40 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Pet Insurance{% endblock %}</title>
+    <title>{% block title %}Pet insurance{% endblock %} · Nami Pet Insurance</title>
+    <meta name="description" content="{% block description %}Simple pet insurance for dogs, cats and other pets: an instant monthly price, cover up to $1,000 and claims you can track online.{% endblock %}">
+    <meta name="theme-color" content="#0F0E0C">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/mark.svg') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,600;6..96,700&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
 </head>
 <body>
-    <header>
-        <nav class="navbar">
-            <a href="{{ url_for('main.index') }}" class="nav-link">Home</a>
-            <a href="{{ url_for('main.coverage') }}" class="nav-link">Coverage</a>
-            <a href="{{ url_for('main.about') }}" class="nav-link">About</a>
-            <a href="{{ url_for('main.contact') }}" class="nav-link">Contact</a>
-            <a href="{{ url_for('quote.get_quote') }}" class="nav-link">Get Quote</a>
+    <a class="skip-link" href="#content">Skip to content</a>
 
-            <div class="nav-right">
-            {% if current_user.is_authenticated %}
-                <span class="nav-user">Welcome, {{ current_user.email }}</span>
-                <a href="{{ url_for('dashboard.user_dashboard') }}" class="nav-link">My Dashboard</a>
-                {% if current_user.is_admin %}
-                    <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-link">Admin Dashboard</a>
+    {% set endpoint = request.endpoint or '' %}
+    <header class="site-header">
+        <div class="wrap">
+            <a class="brand" href="{{ url_for('main.index') }}" aria-label="Nami Pet Insurance, home">
+                {% include 'partials/mark.svg' %}
+                <span>Nami</span>
+            </a>
+            <nav class="nav" aria-label="Main">
+                <a href="{{ url_for('main.coverage') }}" {% if endpoint == 'main.coverage' %}aria-current="page"{% endif %}>What's covered</a>
+                <a href="{{ url_for('quote.get_quote') }}" {% if endpoint == 'quote.get_quote' %}aria-current="page"{% endif %}>Get a quote</a>
+                <a href="{{ url_for('main.about') }}" {% if endpoint == 'main.about' %}aria-current="page"{% endif %}>About</a>
+                <a href="{{ url_for('main.contact') }}" {% if endpoint == 'main.contact' %}aria-current="page"{% endif %}>Contact</a>
+                <span class="nav-account">
+                {% if current_user.is_authenticated %}
+                    {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin.admin_dashboard') }}" {% if endpoint.startswith('admin.') %}aria-current="page"{% endif %}>Admin</a>
+                    {% endif %}
+                    <a href="{{ url_for('dashboard.user_dashboard') }}" {% if endpoint == 'dashboard.user_dashboard' %}aria-current="page"{% endif %}>My pets</a>
+                    <a href="{{ url_for('auth.logout') }}">Log out</a>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" {% if endpoint == 'auth.login' %}aria-current="page"{% endif %}>Log in</a>
+                    <a href="{{ url_for('auth.register') }}" {% if endpoint == 'auth.register' %}aria-current="page"{% endif %}>Create account</a>
                 {% endif %}
-                <a href="{{ url_for('auth.logout') }}" class="nav-link">Logout</a>
-
-            {% else %}
-                <a href="{{ url_for('auth.login') }}" class="nav-link">Login</a>
-                <a href="{{ url_for('auth.register') }}" class="nav-link">Register</a>
-            {% endif %}
-            </div>
-        </nav>
+                </span>
+            </nav>
+        </div>
     </header>
 
-    <main>
+    <main id="content">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="flash-container">
+                <div class="wrap flashes" role="status">
                     {% for category, message in messages %}
                         <div class="flash {{ category }}">{{ message }}</div>
                     {% endfor %}
@@ -48,9 +58,15 @@
     </main>
 
     <footer class="site-footer">
-        <p class="demo-notice">Demo project: no real insurance is sold or provided.</p>
-        <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> ·
-        <a href="{{ url_for('main.delete_account') }}">Delete your account</a>
+        <div class="wrap">
+            <p>Nami Pet Insurance is a demo project: no real insurance is sold or provided.</p>
+            <div class="links">
+                <a href="{{ url_for('main.privacy') }}">Privacy policy</a>
+                <a href="{{ url_for('main.delete_account') }}">Delete your account</a>
+                <a href="{{ url_for('main.contact') }}">Contact</a>
+            </div>
+        </div>
     </footer>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

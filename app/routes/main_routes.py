@@ -1,14 +1,20 @@
 from flask import Blueprint, render_template
 
+from app.utils.premium_calculator import DEFAULT_COVERAGE, calculate_monthly_premium
+
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    return render_template('index.html')
+    # Starting values for the quote tag; the page updates them live via /api/v1/quote.
+    from_prices = {t: calculate_monthly_premium(t, 0) for t in ("Dog", "Cat", "Other")}
+    return render_template('index.html', start_price=calculate_monthly_premium("Dog", 3),
+                           from_prices=from_prices, coverage=DEFAULT_COVERAGE)
 
 @main_bp.route('/coverage')
 def coverage():
-    return render_template('coverage.html')
+    prices = {t: [calculate_monthly_premium(t, a) for a in (1, 5, 10)] for t in ("Dog", "Cat", "Other")}
+    return render_template('coverage.html', prices=prices, coverage=DEFAULT_COVERAGE)
 
 @main_bp.route('/about')
 def about():

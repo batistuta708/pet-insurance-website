@@ -1,57 +1,69 @@
 {% extends 'base.html' %}
 
-{% block title %}My Dashboard{% endblock %}
+{% block title %}My pets{% endblock %}
 
 {% block content %}
-<h2>Welcome, {{ current_user.email }}!</h2>
+<div class="page">
+    <div class="wrap">
+        <div class="page-head">
+            <h1>My pets</h1>
+            <p>Signed in as {{ current_user.email }}</p>
+        </div>
 
-<h3>Your Pets</h3>
-{% if pets %}
-<table class="dashboard-table">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Age</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for pet in pets %}
-        <tr>
-            <td>{{ pet.name }}</td>
-            <td>{{ pet.type }}</td>
-            <td>{{ pet.age }} years</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>You haven’t added any pets yet.</p>
-{% endif %}
+        <div class="dash-grid">
+            <section class="dash-section" aria-labelledby="pets-h">
+                <h2 id="pets-h">Pets and cover</h2>
+                {% if pets %}
+                <div class="pet-cards">
+                    {% for pet in pets %}
+                    <article class="pet-card">
+                        <h3>{{ pet.name }}</h3>
+                        <p class="meta">{{ pet.type }}, {{ pet.age }} {{ 'year' if pet.age == 1 else 'years' }} old</p>
+                        {% if pet.policy %}
+                        <p class="price">${{ '%.2f'|format(pet.policy.premium) }} <small>/ month</small></p>
+                        <p class="meta" style="margin: 4px 0 0">Covered up to ${{ '{:,.0f}'.format(pet.policy.coverage_amount) }}</p>
+                        {% else %}
+                        <p class="meta">No active cover</p>
+                        {% endif %}
+                    </article>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty">You haven't added a pet yet. Add one to see its monthly price and start cover.</p>
+                {% endif %}
+                <p style="margin-top: 20px"><a class="btn" href="{{ url_for('quote.get_quote') }}">Add a pet</a></p>
+            </section>
 
-<h3>Your Policies</h3>
-{% if policies %}
-<table class="dashboard-table">
-    <thead>
-        <tr>
-            <th>Pet Name</th>
-            <th>Coverage</th>
-            <th>Premium</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for policy in policies %}
-        <tr>
-            <td>{{ policy.pet.name }}</td>
-            <td>${{ policy.coverage_amount }}</td>
-            <td>${{ policy.premium }}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>No policies found.</p>
-{% endif %}
-
-<a href="{{ url_for('quote.get_quote') }}" class="btn">Add a Pet / Get Quote</a>
+            <section class="dash-section" aria-labelledby="claims-h">
+                <h2 id="claims-h">Claims</h2>
+                {% if claims %}
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Claim</th><th>Pet</th><th>What happened</th><th class="num">Amount</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for c in claims %}
+                            <tr>
+                                <td>#{{ c.claim.id }}</td>
+                                <td>{{ c.pet_name }}</td>
+                                <td>{{ c.claim.description }}</td>
+                                <td class="num">${{ '%.2f'|format(c.claim.amount) }}</td>
+                                <td><span class="status status-{{ c.claim.status|lower }}">{{ c.claim.status }}</span></td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="empty">No claims yet.</p>
+                {% endif %}
+                <div class="app-note" style="margin-top: 20px">
+                    {% include 'partials/mark.svg' %}
+                    <p><strong>Claims are made in the Nami app.</strong> Submit a claim after a vet visit with the amount and a photo of the bill, then follow its status here or in the app.</p>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
 {% endblock %}

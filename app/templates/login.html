@@ -1,22 +1,26 @@
 {% extends 'base.html' %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Log in{% endblock %}
 
 {% block content %}
-<div class="form-container">
-    <h1>Login</h1>
-    <form method="POST" action="{{ url_for('auth.login') }}" class="auth-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="form-group">
-            <input type="email" name="email" placeholder="Email" required>
+<div class="page">
+    <div class="wrap">
+        <div class="auth">
+            <h1>Log in</h1>
+            <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}" class="panel">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="field">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" autocomplete="email" required autofocus>
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" autocomplete="current-password" required>
+                </div>
+                <button type="submit" class="btn btn-block">Log in</button>
+            </form>
+            <p class="switch">New to Nami? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
         </div>
-
-        <div class="form-group">
-            <input type="password" name="password" placeholder="Password" required>
-        </div>
-
-        <button type="submit" class="btn">Login</button>
-    </form>
-    <p class="auth-link">Don't have an account? <a href="{{ url_for('auth.register') }}">Register here</a>.</p>
+    </div>
 </div>
 {% endblock %}

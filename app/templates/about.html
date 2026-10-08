@@ -1,10 +1,14 @@
 {% extends 'base.html' %}
 
-{% block title %}About Us{% endblock %}
+{% block title %}About{% endblock %}
 
 {% block content %}
-<h1>About Us</h1>
-<p>We make pet insurance simple: a quick online quote, clear monthly pricing,
-and one place to see your pets and policies.</p>
-<p>This project is built with Flask by Batistuta Indiazi.</p>
+<div class="page">
+    <div class="wrap prose">
+        <h1>About Nami</h1>
+        <p>Nami makes pet insurance easy to understand: an instant monthly price, one clear limit, and claims you can follow from your phone.</p>
+        <p>It is a portfolio project by Batistuta Indiazi, built with a Flask website and API and a Flutter app for Android. No real insurance is sold and no claims are paid out.</p>
+        <p>Questions or feedback are welcome on the <a href="{{ url_for('main.contact') }}">contact page</a>.</p>
+    </div>
+</div>
 {% endblock %}

@@ -129,10 +129,11 @@ def test_admin_email_gets_admin_and_reviews_claims(client):
     register(client, "BOSS@example.com")    # listed in ADMIN_EMAILS (case-insensitive)
     assert User.query.filter_by(email="boss@example.com").one().is_admin
 
-    web_login(client, "boss@example.com")
+    resp = web_login(client, "boss@example.com")
+    assert resp.headers["Location"].endswith("/admin/")   # admins land on the admin page
     page = client.get("/admin/")
     assert page.status_code == 200
-    assert b"1 pending" in page.data and b"owner@example.com" in page.data
+    assert b"1 to review" in page.data and b"owner@example.com" in page.data
     assert client.get(f"/admin/claims/{claim['id']}/photo").data == PNG
 
     resp = client.post(f"/admin/claims/{claim['id']}/status", data={"status": "Approved"})
@@ -188,3 +189,20 @@ def test_edit_pet_recalculates_premium(client):
     assert client.patch(f"{API}/pets/{pet['id']}", json={"type": "Dragon"}, headers=h).status_code == 400
     other = register(client, "two@example.com")
     assert client.patch(f"{API}/pets/{pet['id']}", json={"name": "Mine"}, headers=other).status_code == 404
+
+
+def test_customer_dashboard_shows_claims_and_status(client):
+    h = register(client)
+    _, claim = new_claim(client, h)
+    resp = web_login(client, "owner@example.com")
+    assert resp.headers["Location"].endswith("/dashboard")
+    page = client.get("/dashboard").data
+    assert b"Vet visit for a sore paw" in page and b"status-pending" in page
+
+
+def test_home_and_coverage_show_prices(client):
+    home = client.get("/").data
+    assert b"quote-tag" in home and b"$31.20" in home  # dog, 3 years
+    assert b"$24.00" in home                           # dog from-price
+    cov = client.get("/coverage").data
+    assert b"$26.40" in cov and b"$44.00" in cov       # cat 1 year, cat 10 years
