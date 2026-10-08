@@ -4,21 +4,29 @@
 
 {% block content %}
 <h2>Get Your Pet Insurance Quote</h2>
-<form method="POST">
+
+<form method="POST" class="quote-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="pet_name">Pet Name:</label><br>
-    <input type="text" name="pet_name" id="pet_name" required><br><br>
+    <div class="form-group">
+        <label for="pet_name">Pet Name:</label>
+        <input type="text" name="pet_name" id="pet_name" placeholder="Enter your pet's name" required>
+    </div>
 
-    <label for="pet_type">Pet Type:</label><br>
-    <select name="pet_type" id="pet_type" required>
-        <option value="Dog">Dog</option>
-        <option value="Cat">Cat</option>
-        <option value="Other">Other</option>
-    </select><br><br>
+    <div class="form-group">
+        <label for="pet_type">Pet Type:</label>
+        <select name="pet_type" id="pet_type" required>
+            <option value="">Select pet type</option>
+            <option value="Dog">Dog</option>
+            <option value="Cat">Cat</option>
+            <option value="Other">Other</option>
+        </select>
+    </div>
 
-    <label for="pet_age">Pet Age:</label><br>
-    <input type="number" name="pet_age" id="pet_age" min="0" max="30" required><br><br>
+    <div class="form-group">
+        <label for="pet_age">Pet Age:</label>
+        <input type="number" name="pet_age" id="pet_age" placeholder="Enter your pet's age" min="0" max="30" required>
+    </div>
 
-    <button type="submit">Generate Quote</button>
+    <button type="submit" class="btn">Generate Quote</button>
 </form>
 {% endblock %}

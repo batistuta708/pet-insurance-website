@@ -7,25 +7,51 @@
 
 <h3>Your Pets</h3>
 {% if pets %}
-    <ul>
+<table class="dashboard-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Age</th>
+        </tr>
+    </thead>
+    <tbody>
     {% for pet in pets %}
-        <li>{{ pet.name }} ({{ pet.type }}, {{ pet.age }} years old)</li>
+        <tr>
+            <td>{{ pet.name }}</td>
+            <td>{{ pet.type }}</td>
+            <td>{{ pet.age }} years</td>
+        </tr>
     {% endfor %}
-    </ul>
+    </tbody>
+</table>
 {% else %}
-    <p>You haven’t added any pets yet.</p>
+<p>You haven’t added any pets yet.</p>
 {% endif %}
 
 <h3>Your Policies</h3>
 {% if policies %}
-    <ul>
+<table class="dashboard-table">
+    <thead>
+        <tr>
+            <th>Pet Name</th>
+            <th>Coverage</th>
+            <th>Premium</th>
+        </tr>
+    </thead>
+    <tbody>
     {% for policy in policies %}
-        <li>{{ policy.pet.name }} – Coverage: ${{ policy.coverage_amount }}, Premium: ${{ policy.premium }}</li>
+        <tr>
+            <td>{{ policy.pet.name }}</td>
+            <td>${{ policy.coverage_amount }}</td>
+            <td>${{ policy.premium }}</td>
+        </tr>
     {% endfor %}
-    </ul>
+    </tbody>
+</table>
 {% else %}
-    <p>No policies found.</p>
+<p>No policies found.</p>
 {% endif %}
 
-<a href="{{ url_for('quote.get_quote') }}">Add a Pet / Get Quote</a>
+<a href="{{ url_for('quote.get_quote') }}" class="btn">Add a Pet / Get Quote</a>
 {% endblock %}

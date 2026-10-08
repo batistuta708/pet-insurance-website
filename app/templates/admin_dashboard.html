@@ -6,23 +6,64 @@
 <h1>Admin Dashboard</h1>
 
 <h2>Users</h2>
-<ul>
+<table class="dashboard-table">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Role</th>
+        </tr>
+    </thead>
+    <tbody>
     {% for user in users %}
-        <li>{{ user.email }} {% if user.is_admin %}(Admin){% endif %}</li>
+        <tr>
+            <td>{{ user.email }}</td>
+            <td>{% if user.is_admin %}Admin{% else %}User{% endif %}</td>
+        </tr>
     {% endfor %}
-</ul>
+    </tbody>
+</table>
 
 <h2>Pets</h2>
-<ul>
+<table class="dashboard-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Age</th>
+            <th>Owner ID</th>
+        </tr>
+    </thead>
+    <tbody>
     {% for pet in pets %}
-        <li>{{ pet.name }} ({{ pet.type }}, Age {{ pet.age }}) - Owner ID: {{ pet.owner_id }}</li>
+        <tr>
+            <td>{{ pet.name }}</td>
+            <td>{{ pet.type }}</td>
+            <td>{{ pet.age }}</td>
+            <td>{{ pet.owner_id }}</td>
+        </tr>
     {% endfor %}
-</ul>
+    </tbody>
+</table>
 
 <h2>Policies</h2>
-<ul>
+<table class="dashboard-table">
+    <thead>
+        <tr>
+            <th>Policy ID</th>
+            <th>Pet ID</th>
+            <th>Coverage</th>
+            <th>Premium</th>
+        </tr>
+    </thead>
+    <tbody>
     {% for policy in policies %}
-        <li>Policy ID: {{ policy.id }} | Pet ID: {{ policy.pet_id }} | Coverage: ${{ policy.coverage_amount }} | Premium: ${{ policy.premium }}</li>
+        <tr>
+            <td>{{ policy.id }}</td>
+            <td>{{ policy.pet_id }}</td>
+            <td>${{ policy.coverage_amount }}</td>
+            <td>${{ policy.premium }}</td>
+        </tr>
     {% endfor %}
-</ul>
+    </tbody>
+</table>
 {% endblock %}

@@ -6,12 +6,12 @@
 <section class="hero">
     <h1>Welcome to Pet Insurance</h1>
     <p>Protect your furry friends 🐶🐱 with easy and affordable insurance plans!</p>
-    <a href="{{ url_for('quote.get_quote') }}">Get Your Quote Now</a>
+    <a href="{{ url_for('quote.get_quote') }}" class="btn btn-primary">Get Your Quote Now</a>
 </section>
 
 <section class="highlights">
     <h2>Why Choose Us?</h2>
-    <ul>
+    <ul class="highlights-list">
         <li>Fast and easy online quotes</li>
         <li>Affordable monthly premiums</li>
         <li>Coverage for dogs, cats, and more</li>
@@ -21,7 +21,11 @@
 
 <section class="cta">
     {% if not current_user.is_authenticated %}
-        <p>New here? <a href="{{ url_for('auth.register') }}">Register an account</a> or <a href="{{ url_for('auth.login') }}">Login</a></p>
+        <p>New here? 
+            <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">Register</a> 
+            or 
+            <a href="{{ url_for('auth.login') }}" class="btn btn-secondary">Login</a>
+        </p>
     {% endif %}
 </section>
 {% endblock %}
