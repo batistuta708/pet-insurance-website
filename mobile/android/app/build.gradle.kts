@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "com.batistuta.pet_insurance"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "30.0.16248370" // NDK installed via Android Studio SDK Manager
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
