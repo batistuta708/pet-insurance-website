@@ -30,7 +30,8 @@ class ApiClient {
   /// Bearer token; set after login, cleared on logout.
   String? token;
 
-  static const _timeout = Duration(seconds: 15);
+  // Generous: a sleeping free-tier server can take ~1 minute to wake up.
+  static const _timeout = Duration(seconds: 60);
 
   Future<dynamic> _send(String method, String path, {Object? body}) async {
     final request = http.Request(method, Uri.parse('$baseUrl$path'));
@@ -46,7 +47,7 @@ class ApiClient {
       final streamed = await _http.send(request).timeout(_timeout);
       response = await http.Response.fromStream(streamed).timeout(_timeout);
     } on TimeoutException {
-      throw ApiException('The server took too long to respond. Please try again.');
+      throw ApiException('The server is taking too long to respond. Please try again in a moment.');
     } on SocketException {
       throw ApiException('Cannot reach the server. Check your internet connection.');
     } on http.ClientException {

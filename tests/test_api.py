@@ -18,6 +18,7 @@ def client():
     app = create_app(TestConfig)
     with app.app_context():
         yield app.test_client()
+        db.session.remove()  # release the connection so DROP TABLE is not blocked
         db.drop_all()
 
 
