@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import '../api/api_client.dart';
 import '../state/session.dart';
 
-/// Shows an API error. A 401 means the session expired: sign out and return to login.
+/// Shows an API error. A 401 while signed in means the session expired: sign out and
+/// return to login. A 401 while signed out (e.g. wrong password) just shows the message.
 void showApiError(BuildContext context, Object error) {
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
-  if (error is ApiException && error.isUnauthorized) {
-    final session = SessionScope.read(context);
+  final session = SessionScope.read(context);
+  if (error is ApiException && error.isUnauthorized && session.isLoggedIn) {
     Navigator.of(context).popUntil((route) => route.isFirst);
     session.logout();
     messenger.showSnackBar(
