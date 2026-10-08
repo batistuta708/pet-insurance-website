@@ -21,3 +21,8 @@ def contact():
 @main_bp.route('/privacy')
 def privacy():
     return render_template('privacy.html')
+
+
+@main_bp.route('/delete-account')
+def delete_account():
+    return render_template('delete_account.html')

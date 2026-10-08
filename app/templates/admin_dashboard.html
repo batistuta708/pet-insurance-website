@@ -5,6 +5,49 @@
 {% block content %}
 <h1>Admin Dashboard</h1>
 
+<h2 id="claims">Claims {% if pending_count %}<span class="badge">{{ pending_count }} pending</span>{% endif %}</h2>
+{% if claim_rows %}
+<table class="dashboard-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Pet</th>
+            <th>Owner</th>
+            <th>Amount</th>
+            <th>Description</th>
+            <th>Photo</th>
+            <th>Status</th>
+            <th>Decision</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for row in claim_rows %}
+        {% set c = row.claim %}
+        <tr>
+            <td>{{ c.id }}</td>
+            <td>{{ row.pet_name }}</td>
+            <td>{{ row.owner_email }}</td>
+            <td>${{ '%.2f'|format(c.amount) }}{% if row.coverage %}<br><small>of ${{ '%.0f'|format(row.coverage) }}</small>{% endif %}</td>
+            <td>{{ c.description }}</td>
+            <td>{% if row.has_photo %}<a href="{{ url_for('admin.claim_photo', claim_id=c.id) }}" target="_blank" rel="noopener">View</a>{% else %}—{% endif %}</td>
+            <td><span class="status status-{{ c.status|lower }}">{{ c.status }}</span></td>
+            <td class="claim-actions">
+                {% for status in statuses if status != c.status %}
+                <form method="POST" action="{{ url_for('admin.set_claim_status', claim_id=c.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="status" value="{{ status }}">
+                    <button type="submit" class="btn btn-small btn-{{ status|lower }}">{{ 'Approve' if status == 'Approved' else 'Reject' if status == 'Rejected' else 'Reset to pending' }}</button>
+                </form>
+                {% endfor %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No claims yet.</p>
+{% endif %}
+
 <h2>Users</h2>
 <table class="dashboard-table">
     <thead>

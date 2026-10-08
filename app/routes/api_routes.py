@@ -6,21 +6,26 @@ Errors always look like: {"error": "message"} with a 4xx status code.
 """
 from functools import wraps
 
-from flask import Blueprint, current_app, g, jsonify, request
+from flask import Blueprint, Response, current_app, g, jsonify, request
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 from app.models.claim import Claim
+from app.models.claim_photo import ClaimPhoto
 from app.models.pet import Pet
 from app.models.policy import Policy
 from app.models.user import User
+from app.utils.accounts import apply_admin_flag, delete_pet as _delete_pet_cascade
+from app.utils.accounts import delete_user, detect_image_type
 from app.utils.premium_calculator import DEFAULT_COVERAGE, calculate_monthly_premium
 
 api_bp = Blueprint("api", __name__)
 
 PET_TYPES = ("Dog", "Cat", "Other")
 TOKEN_MAX_AGE_SECONDS = 60 * 60 * 24 * 30  # 30 days
+MAX_PHOTO_BYTES = 5 * 1024 * 1024
+MIN_PASSWORD_LENGTH = 8
 
 
 # ---------- helpers ----------
@@ -111,6 +116,7 @@ def claim_json(claim, policy):
         "description": claim.description,
         "amount": claim.amount,
         "status": claim.status,
+        "has_photo": ClaimPhoto.query.filter_by(claim_id=claim.id).first() is not None,
     }
 
 
@@ -132,13 +138,14 @@ def register():
     password = str(data.get("password") or "")
     if "@" not in email or len(email) > 120:
         return error("Please enter a valid email address.")
-    if len(password) < 8:
-        return error("Password must be at least 8 characters.")
+    if len(password) < MIN_PASSWORD_LENGTH:
+        return error(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
     if User.query.filter_by(email=email).first():
         return error("An account with that email already exists.", 409)
     user = User(email=email, password=generate_password_hash(password))
     db.session.add(user)
     db.session.commit()
+    apply_admin_flag(user)
     return jsonify({"token": make_token(user), "user": user_json(user)}), 201
 
 
@@ -150,6 +157,7 @@ def login():
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password, password):
         return error("Invalid email or password.", 401)
+    apply_admin_flag(user)
     return jsonify({"token": make_token(user), "user": user_json(user)})
 
 
@@ -163,13 +171,25 @@ def me():
 @token_required
 def delete_account():
     """Permanently deletes the account and all its pets, policies and claims (Google Play requirement)."""
-    user = g.api_user
-    for pet in Pet.query.filter_by(owner_id=user.id).all():
-        if pet.policy:
-            Claim.query.filter_by(policy_id=pet.policy.id).delete()
-            db.session.delete(pet.policy)
-        db.session.delete(pet)
-    db.session.delete(user)
+    delete_user(g.api_user)
+    db.session.commit()
+    return "", 204
+
+
+@api_bp.post("/me/password")
+@token_required
+def change_password():
+    data = json_body()
+    current = str(data.get("current_password") or "")
+    new = str(data.get("new_password") or "")
+    if not check_password_hash(g.api_user.password, current):
+        # 403, not 401: the session is fine, the password typed is wrong.
+        return error("Your current password is incorrect.", 403)
+    if len(new) < MIN_PASSWORD_LENGTH:
+        return error(f"New password must be at least {MIN_PASSWORD_LENGTH} characters.")
+    if new == current:
+        return error("New password must be different from the current one.")
+    g.api_user.password = generate_password_hash(new)
     db.session.commit()
     return "", 204
 
@@ -236,12 +256,32 @@ def delete_pet(pet_id):
     pet = _own_pet_or_404(pet_id)
     if pet is None:
         return error("Pet not found.", 404)
-    if pet.policy:
-        Claim.query.filter_by(policy_id=pet.policy.id).delete()
-        db.session.delete(pet.policy)
-    db.session.delete(pet)
+    _delete_pet_cascade(pet)
     db.session.commit()
     return "", 204
+
+
+@api_bp.patch("/pets/<int:pet_id>")
+@token_required
+def update_pet(pet_id):
+    """Edit name, type and/or age; the policy premium is recalculated."""
+    pet = _own_pet_or_404(pet_id)
+    if pet is None:
+        return error("Pet not found.", 404)
+    data = json_body()
+    merged = {
+        "name": data.get("name", pet.name),
+        "type": data.get("type", pet.type),
+        "age": data.get("age", pet.age),
+    }
+    name, pet_type, age, msg = validate_pet_input(merged)
+    if msg:
+        return error(msg)
+    pet.name, pet.type, pet.age = name, pet_type, age
+    if pet.policy:
+        pet.policy.premium = calculate_monthly_premium(pet_type, age)
+    db.session.commit()
+    return jsonify(pet_json(pet))
 
 
 # ---------- policies ----------
@@ -294,6 +334,54 @@ def create_claim():
     db.session.add(claim)
     db.session.commit()
     return jsonify(claim_json(claim, policy)), 201
+
+
+def _own_claim_or_none(claim_id):
+    claim = db.session.get(Claim, claim_id)
+    if claim is None:
+        return None, None
+    policy = db.session.get(Policy, claim.policy_id)
+    if policy is None or policy.pet is None or policy.pet.owner_id != g.api_user.id:
+        return None, None
+    return claim, policy
+
+
+@api_bp.post("/claims/<int:claim_id>/photo")
+@token_required
+def upload_claim_photo(claim_id):
+    """Attach (or replace) the photo of a claim. Multipart form field: "photo"."""
+    claim, policy = _own_claim_or_none(claim_id)
+    if claim is None:
+        return error("Claim not found.", 404)
+    upload = request.files.get("photo")
+    if upload is None:
+        return error('Send the image as a multipart form field named "photo".')
+    data = upload.read(MAX_PHOTO_BYTES + 1)
+    if len(data) > MAX_PHOTO_BYTES:
+        return error("Photo is too large (maximum 5 MB).", 413)
+    mime = detect_image_type(data)
+    if mime is None:
+        return error("Photo must be a JPEG, PNG or WebP image.")
+    photo = ClaimPhoto.query.filter_by(claim_id=claim.id).first()
+    if photo is None:
+        photo = ClaimPhoto(claim_id=claim.id, mime_type=mime, data=data)
+        db.session.add(photo)
+    else:
+        photo.mime_type, photo.data = mime, data
+    db.session.commit()
+    return jsonify(claim_json(claim, policy)), 201
+
+
+@api_bp.get("/claims/<int:claim_id>/photo")
+@token_required
+def get_claim_photo(claim_id):
+    claim, _ = _own_claim_or_none(claim_id)
+    photo = ClaimPhoto.query.filter_by(claim_id=claim.id).first() if claim else None
+    if photo is None:
+        return error("Photo not found.", 404)
+    return Response(photo.data, mimetype=photo.mime_type,
+                    headers={"Cache-Control": "private, max-age=3600",
+                             "X-Content-Type-Options": "nosniff"})
 
 
 @api_bp.errorhandler(404)

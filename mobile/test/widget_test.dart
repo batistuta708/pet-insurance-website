@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:pet_insurance/api/api_client.dart';
+import 'package:pet_insurance/main.dart';
 import 'package:pet_insurance/screens/login_screen.dart';
 import 'package:pet_insurance/state/session.dart';
 
@@ -45,6 +46,16 @@ void main() {
 
     expect(find.text('Invalid email or password.'), findsOneWidget);
     expect(find.textContaining('session expired'), findsNothing);
+  });
+
+  testWidgets('whole app builds and shows login with the demo notice', (tester) async {
+    // Importing main.dart compiles every screen, so this also catches build errors anywhere.
+    final session = Session(api: ApiClient(baseUrl: 'http://test/api/v1'))..restoring = false;
+    await tester.pumpWidget(PetInsuranceApp(session: session));
+    await tester.pump();
+
+    expect(find.text('Log in'), findsOneWidget);
+    expect(find.textContaining('Demo app'), findsOneWidget);
   });
 
   testWidgets('can switch to the create-account form', (tester) async {

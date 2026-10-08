@@ -22,7 +22,7 @@ def create_app(config_object="app.config.Config"):
     login_manager.init_app(app)
 
     # Import models so SQLAlchemy knows every table before create_all()
-    from app.models import claim, pet, policy  # noqa: F401
+    from app.models import claim, claim_photo, pet, policy  # noqa: F401
     from app.models.user import User
 
     @login_manager.user_loader
@@ -52,6 +52,12 @@ def create_app(config_object="app.config.Config"):
     def not_found(e):
         if request.path.startswith("/api/"):
             return jsonify({"error": "Not found."}), 404
+        return e
+
+    @app.errorhandler(413)
+    def too_large(e):
+        if request.path.startswith("/api/"):
+            return jsonify({"error": "File is too large (maximum 5 MB)."}), 413
         return e
 
     @app.errorhandler(405)

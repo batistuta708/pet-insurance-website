@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -33,14 +34,22 @@ class ApiClient {
   // Generous: a sleeping free-tier server can take ~1 minute to wake up.
   static const _timeout = Duration(seconds: 60);
 
-  Future<dynamic> _send(String method, String path, {Object? body}) async {
+  /// Headers needed to load protected resources such as claim photos.
+  Map<String, String> get authHeaders =>
+      token == null ? const {} : {'Authorization': 'Bearer $token'};
+
+  Future<dynamic> _send(String method, String path, {Object? body}) {
     final request = http.Request(method, Uri.parse('$baseUrl$path'));
-    request.headers['Accept'] = 'application/json';
-    if (token != null) request.headers['Authorization'] = 'Bearer $token';
     if (body != null) {
       request.headers['Content-Type'] = 'application/json';
       request.body = jsonEncode(body);
     }
+    return _execute(request);
+  }
+
+  Future<dynamic> _execute(http.BaseRequest request) async {
+    request.headers['Accept'] = 'application/json';
+    request.headers.addAll(authHeaders);
 
     final http.Response response;
     try {
@@ -78,7 +87,7 @@ class ApiClient {
   List<T> _list<T>(dynamic data, T Function(Map<String, dynamic>) fromJson) =>
       (data as List).map((e) => fromJson(e as Map<String, dynamic>)).toList();
 
-  // ---- auth ----
+  // ---- auth & account ----
 
   Future<AuthResult> login(String email, String password) async => AuthResult.fromJson(
       await _send('POST', '/auth/login', body: {'email': email, 'password': password}));
@@ -90,6 +99,12 @@ class ApiClient {
 
   Future<void> deleteAccount() => _send('DELETE', '/me');
 
+  Future<void> changePassword({required String current, required String newPassword}) =>
+      _send('POST', '/me/password', body: {
+        'current_password': current,
+        'new_password': newPassword,
+      });
+
   // ---- quotes & pets ----
 
   Future<Quote> quote(String type, int age) async =>
@@ -99,6 +114,10 @@ class ApiClient {
 
   Future<Pet> addPet({required String name, required String type, required int age}) async =>
       Pet.fromJson(await _send('POST', '/pets', body: {'name': name, 'type': type, 'age': age}));
+
+  /// Edits a pet; the server recalculates its premium.
+  Future<Pet> updatePet(int id, {required String name, required String type, required int age}) async =>
+      Pet.fromJson(await _send('PATCH', '/pets/$id', body: {'name': name, 'type': type, 'age': age}));
 
   Future<void> deletePet(int id) => _send('DELETE', '/pets/$id');
 
@@ -118,4 +137,14 @@ class ApiClient {
         'description': description,
         'amount': amount,
       }));
+
+  /// Attaches (or replaces) the photo of a claim. JPEG, PNG or WebP, up to 5 MB.
+  Future<Claim> uploadClaimPhoto(int claimId, Uint8List bytes, {String filename = 'photo.jpg'}) async {
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl/claims/$claimId/photo'))
+      ..files.add(http.MultipartFile.fromBytes('photo', bytes, filename: filename));
+    return Claim.fromJson(await _execute(request));
+  }
+
+  /// URL of a claim's photo; load it with [authHeaders].
+  String claimPhotoUrl(int claimId) => '$baseUrl/claims/$claimId/photo';
 }

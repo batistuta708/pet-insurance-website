@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -77,5 +78,64 @@ void main() {
     final claims = await api.claims();
     expect(claims.single.petName, 'Tom');
     expect(claims.single.amount, 120.5);
+  });
+
+  test('changePassword posts both passwords', () async {
+    late http.Request sent;
+    final api = clientReturning(204, null, onRequest: (r) => sent = r)..token = 't';
+    await api.changePassword(current: 'oldpassword', newPassword: 'newpassword');
+    expect(sent.url.toString(), '$base/me/password');
+    expect(jsonDecode(sent.body), {'current_password': 'oldpassword', 'new_password': 'newpassword'});
+  });
+
+  test('wrong current password is a 403, not a logout', () async {
+    final api = clientReturning(403, {'error': 'Your current password is incorrect.'});
+    expect(
+      () => api.changePassword(current: 'x', newPassword: 'newpassword'),
+      throwsA(isA<ApiException>()
+          .having((e) => e.isUnauthorized, 'isUnauthorized', false)
+          .having((e) => e.message, 'message', 'Your current password is incorrect.')),
+    );
+  });
+
+  test('updatePet sends PATCH and parses the new premium', () async {
+    late http.Request sent;
+    final api = clientReturning(200, {
+      'id': 5, 'name': 'Rexy', 'type': 'Dog', 'age': 8,
+      'policy': {'id': 9, 'pet_id': 5, 'pet_name': 'Rexy', 'coverage_amount': 1000, 'monthly_premium': 43.2},
+    }, onRequest: (r) => sent = r);
+    final pet = await api.updatePet(5, name: 'Rexy', type: 'Dog', age: 8);
+    expect(sent.method, 'PATCH');
+    expect(sent.url.toString(), '$base/pets/5');
+    expect(pet.policy!.monthlyPremium, 43.2);
+  });
+
+  test('uploadClaimPhoto sends a multipart "photo" field with the token', () async {
+    late http.Request sent;
+    final api = clientReturning(201, {
+      'id': 3, 'policy_id': 2, 'pet_name': 'Tom', 'description': 'Vet visit',
+      'amount': 50, 'status': 'Pending', 'has_photo': true,
+    }, onRequest: (r) => sent = r)..token = 'tok';
+    final bytes = Uint8List.fromList([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
+
+    final claim = await api.uploadClaimPhoto(3, bytes, filename: 'bill.jpg');
+
+    expect(sent.method, 'POST');
+    expect(sent.url.toString(), '$base/claims/3/photo');
+    expect(sent.headers['Authorization'], 'Bearer tok');
+    expect(sent.headers['content-type'], startsWith('multipart/form-data'));
+    final body = latin1.decode(sent.bodyBytes);
+    expect(body, contains('name="photo"'));
+    expect(body, contains('filename="bill.jpg"'));
+    expect(claim.hasPhoto, isTrue);
+    expect(api.claimPhotoUrl(3), '$base/claims/3/photo');
+    expect(api.authHeaders, {'Authorization': 'Bearer tok'});
+  });
+
+  test('claims without has_photo default to no photo', () async {
+    final api = clientReturning(200, [
+      {'id': 1, 'policy_id': 2, 'pet_name': 'Tom', 'description': 'Vet visit', 'amount': 10, 'status': 'Pending'},
+    ]);
+    expect((await api.claims()).single.hasPhoto, isFalse);
   });
 }

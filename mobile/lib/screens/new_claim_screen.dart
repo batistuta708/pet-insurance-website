@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../api/models.dart';
 import '../state/session.dart';
@@ -21,6 +24,10 @@ class _NewClaimScreenState extends State<NewClaimScreen> {
   String? _error;
   int? _policyId;
   bool _saving = false;
+
+  // Optional photo, e.g. of the vet bill. Resized/compressed before upload.
+  Uint8List? _photo;
+  String _photoName = 'photo.jpg';
 
   @override
   void initState() {
@@ -60,19 +67,50 @@ class _NewClaimScreenState extends State<NewClaimScreen> {
 
   double? get _parsedAmount => double.tryParse(_amount.text.trim().replaceAll(',', '.'));
 
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final file = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 80,
+      );
+      if (file == null) return; // cancelled
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _photo = bytes;
+        _photoName = file.name;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the camera or gallery.')),
+      );
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
+    final api = SessionScope.read(context).api;
     try {
-      await SessionScope.read(context).api.submitClaim(
-            policyId: _policyId!,
-            description: _description.text.trim(),
-            amount: _parsedAmount!,
-          );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Claim submitted. We will review it shortly.')),
+      final claim = await api.submitClaim(
+        policyId: _policyId!,
+        description: _description.text.trim(),
+        amount: _parsedAmount!,
       );
+      String message = 'Claim submitted. We will review it shortly.';
+      final photo = _photo;
+      if (photo != null) {
+        try {
+          await api.uploadClaimPhoto(claim.id, photo, filename: _photoName);
+        } catch (e) {
+          message = 'Claim submitted, but the photo could not be uploaded: $e';
+        }
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) showApiError(context, e);
@@ -155,6 +193,12 @@ class _NewClaimScreenState extends State<NewClaimScreen> {
                 ? 'Please describe it in at least 10 characters'
                 : null,
           ),
+          const SizedBox(height: 8),
+          _PhotoPicker(
+            photo: _photo,
+            onPick: _saving ? null : _pickPhoto,
+            onRemove: _saving ? null : () => setState(() => _photo = null),
+          ),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: _saving ? null : _submit,
@@ -169,6 +213,65 @@ class _NewClaimScreenState extends State<NewClaimScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PhotoPicker extends StatelessWidget {
+  const _PhotoPicker({required this.photo, required this.onPick, required this.onRemove});
+
+  final Uint8List? photo;
+  final void Function(ImageSource source)? onPick;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final image = photo;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Photo of the vet bill (optional)', style: theme.textTheme.labelLarge),
+        const SizedBox(height: 8),
+        if (image != null)
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.memory(image, height: 180, width: double.infinity, fit: BoxFit.cover),
+              ),
+              Positioned(
+                top: 6,
+                right: 6,
+                child: IconButton.filled(
+                  tooltip: 'Remove photo',
+                  onPressed: onRemove,
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onPick == null ? null : () => onPick!(ImageSource.camera),
+                  icon: const Icon(Icons.photo_camera_outlined),
+                  label: const Text('Take photo'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onPick == null ? null : () => onPick!(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library_outlined),
+                  label: const Text('Gallery'),
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 }

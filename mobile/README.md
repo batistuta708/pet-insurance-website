@@ -3,8 +3,10 @@
 Native Android/iOS app for the Pet Insurance service. It talks to the Flask
 backend in the parent folder through its JSON API (`/api/v1`).
 
-**Screens:** log in / create account · My Pets (add a pet with a live price quote, remove a pet) ·
-Claims (list with status, submit a new claim) · Account (log out, privacy policy, delete account).
+**Screens:** log in / create account · My Pets (add a pet with a live price quote, edit or remove a pet) ·
+Claims (list with status and photo, submit a new claim with an optional photo of the vet bill) ·
+Account (change password, privacy policy, log out, delete account). A demo notice is shown on
+the login and account screens, as Google Play requires for an app that is not a licensed insurer.
 
 ```
 mobile/

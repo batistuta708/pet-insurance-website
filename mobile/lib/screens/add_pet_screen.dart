@@ -9,8 +9,11 @@ import '../widgets/common.dart';
 
 const petTypes = ['Dog', 'Cat', 'Other'];
 
+/// Adds a new pet, or edits [pet] when given (name, type and age; the premium is recalculated).
 class AddPetScreen extends StatefulWidget {
-  const AddPetScreen({super.key});
+  const AddPetScreen({super.key, this.pet});
+
+  final Pet? pet;
 
   @override
   State<AddPetScreen> createState() => _AddPetScreenState();
@@ -26,6 +29,21 @@ class _AddPetScreenState extends State<AddPetScreen> {
   bool _quoting = false;
   bool _saving = false;
   Timer? _debounce;
+
+  bool get _editing => widget.pet != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final pet = widget.pet;
+    if (pet != null) {
+      _name.text = pet.name;
+      _age.text = '${pet.age}';
+      _type = petTypes.contains(pet.type) ? pet.type : 'Other';
+      // Show the current price straight away.
+      WidgetsBinding.instance.addPostFrameCallback((_) => _refreshQuote());
+    }
+  }
 
   @override
   void dispose() {
@@ -68,18 +86,24 @@ class _AddPetScreenState extends State<AddPetScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
     try {
-      final pet = await SessionScope.read(context).api.addPet(
-            name: _name.text.trim(),
-            type: _type,
-            age: _parsedAge!,
-          );
+      final api = SessionScope.read(context).api;
+      final existing = widget.pet;
+      final pet = existing == null
+          ? await api.addPet(name: _name.text.trim(), type: _type, age: _parsedAge!)
+          : await api.updatePet(existing.id, name: _name.text.trim(), type: _type, age: _parsedAge!);
       if (!mounted) return;
       final premium = pet.policy?.monthlyPremium;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(premium == null
+      final String message;
+      if (existing != null) {
+        message = premium == null
+            ? '${pet.name} updated.'
+            : '${pet.name} updated: now ${formatMoney(premium)}/month.';
+      } else {
+        message = premium == null
             ? '${pet.name} added.'
-            : '${pet.name} is covered for ${formatMoney(premium)}/month.'),
-      ));
+            : '${pet.name} is covered for ${formatMoney(premium)}/month.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) showApiError(context, e);
@@ -92,7 +116,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Add a pet')),
+      appBar: AppBar(title: Text(_editing ? 'Edit ${widget.pet!.name}' : 'Add a pet')),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -148,7 +172,7 @@ class _AddPetScreenState extends State<AddPetScreen> {
                         width: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Add pet and start cover'),
+                    : Text(_editing ? 'Save changes' : 'Add pet and start cover'),
               ),
             ],
           ),

@@ -74,6 +74,7 @@ class Claim {
     required this.description,
     required this.amount,
     required this.status,
+    this.hasPhoto = false,
   });
 
   final int id;
@@ -82,6 +83,7 @@ class Claim {
   final String description;
   final double amount;
   final String status;
+  final bool hasPhoto;
 
   factory Claim.fromJson(Map<String, dynamic> json) => Claim(
         id: json['id'] as int,
@@ -90,6 +92,7 @@ class Claim {
         description: json['description'] as String,
         amount: _toDouble(json['amount']),
         status: json['status'] as String,
+        hasPhoto: (json['has_photo'] as bool?) ?? false,
       );
 }
 

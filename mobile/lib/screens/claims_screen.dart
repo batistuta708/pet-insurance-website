@@ -121,10 +121,72 @@ class _ClaimCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(claim.description),
+            if (claim.hasPhoto) ...[
+              const SizedBox(height: 12),
+              _ClaimPhoto(claimId: claim.id),
+            ],
             const SizedBox(height: 4),
             Text('Claim #${claim.id}', style: theme.textTheme.bodySmall),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Thumbnail of a claim's photo; tap to view it full screen.
+class _ClaimPhoto extends StatelessWidget {
+  const _ClaimPhoto({required this.claimId});
+
+  final int claimId;
+
+  @override
+  Widget build(BuildContext context) {
+    final api = SessionScope.read(context).api;
+    final url = api.claimPhotoUrl(claimId);
+    final headers = api.authHeaders;
+
+    Widget image({BoxFit fit = BoxFit.cover, double? height}) => Image.network(
+          url,
+          headers: headers,
+          height: height,
+          width: double.infinity,
+          fit: fit,
+          loadingBuilder: (context, child, progress) => progress == null
+              ? child
+              : SizedBox(height: height ?? 200, child: const Center(child: CircularProgressIndicator())),
+          errorBuilder: (context, error, stack) => SizedBox(
+            height: height ?? 200,
+            child: const Center(child: Text('Photo could not be loaded')),
+          ),
+        );
+
+    return GestureDetector(
+      onTap: () => showDialog<void>(
+        context: context,
+        builder: (context) => Dialog.fullscreen(
+          backgroundColor: Colors.black,
+          child: Stack(
+            children: [
+              Center(child: InteractiveViewer(child: image(fit: BoxFit.contain))),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: SafeArea(
+                  child: IconButton.filled(
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: image(height: 140),
       ),
     );
   }

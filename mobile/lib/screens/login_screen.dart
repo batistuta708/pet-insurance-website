@@ -138,6 +138,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? 'Already have an account? Log in'
                           : 'New here? Create an account'),
                     ),
+                    const SizedBox(height: 24),
+                    const DemoNotice(),
                   ],
                 ),
               ),

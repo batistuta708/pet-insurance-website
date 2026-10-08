@@ -25,3 +25,9 @@ class Config:
     # Drop dead connections after the database restarts or idles (managed Postgres does this).
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Comma-separated emails that become admins when they register or log in.
+    ADMIN_EMAILS = {
+        e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()
+    }
+    # Largest upload accepted (claim photos are limited to 5 MB in the API).
+    MAX_CONTENT_LENGTH = 6 * 1024 * 1024

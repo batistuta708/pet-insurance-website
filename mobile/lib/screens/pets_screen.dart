@@ -45,6 +45,13 @@ class _PetsScreenState extends State<PetsScreen> {
     if (added == true) _load();
   }
 
+  Future<void> _editPet(Pet pet) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => AddPetScreen(pet: pet)),
+    );
+    if (saved == true) _load();
+  }
+
   Future<void> _deletePet(Pet pet) async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -96,7 +103,11 @@ class _PetsScreenState extends State<PetsScreen> {
         child: ListView.builder(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 96),
           itemCount: pets.length,
-          itemBuilder: (context, i) => _PetCard(pet: pets[i], onDelete: () => _deletePet(pets[i])),
+          itemBuilder: (context, i) => _PetCard(
+            pet: pets[i],
+            onEdit: () => _editPet(pets[i]),
+            onDelete: () => _deletePet(pets[i]),
+          ),
         ),
       );
     }
@@ -115,9 +126,10 @@ class _PetsScreenState extends State<PetsScreen> {
 }
 
 class _PetCard extends StatelessWidget {
-  const _PetCard({required this.pet, required this.onDelete});
+  const _PetCard({required this.pet, required this.onEdit, required this.onDelete});
 
   final Pet pet;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   IconData get _icon => switch (pet.type) {
@@ -132,7 +144,10 @@ class _PetCard extends StatelessWidget {
     final policy = pet.policy;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onEdit,
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
@@ -159,11 +174,17 @@ class _PetCard extends StatelessWidget {
               ),
             ),
             IconButton(
+              tooltip: 'Edit ${pet.name}',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: onEdit,
+            ),
+            IconButton(
               tooltip: 'Remove ${pet.name}',
               icon: const Icon(Icons.delete_outline),
               onPressed: onDelete,
             ),
           ],
+        ),
         ),
       ),
     );

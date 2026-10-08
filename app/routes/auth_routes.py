@@ -4,6 +4,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app import db
 from app.models.user import User
+from app.utils.accounts import apply_admin_flag
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -18,6 +19,7 @@ def login():
         password = request.form.get("password") or ""
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
+            apply_admin_flag(user)
             login_user(user)
             next_page = request.args.get("next")
             # Only follow relative redirects to avoid open-redirects
